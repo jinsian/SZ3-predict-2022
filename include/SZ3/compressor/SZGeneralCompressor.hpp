@@ -11,6 +11,9 @@
 #include "SZ3/def.hpp"
 #include <cstring>
 
+float temp_adjust = 0;
+float temp_p0 = 0;
+
 namespace SZ {
     template<class T, uint N, class Frontend, class Encoder, class Lossless>
     class SZGeneralCompressor : public concepts::CompressorInterface<T> {
@@ -29,8 +32,16 @@ namespace SZ {
 
         uchar *compress(const Config &conf, T *data, size_t &compressed_size) {
 
-//            printf("compress start\n");
+           // printf("compress start\n");
             std::vector<int> quant_inds = frontend.compress(data);
+            float temp_range = SZ::data_range(data, conf.num);
+            float temp_e2 = conf.absErrorBound * conf.absErrorBound / 3;
+            float est_PSNR = 0;
+            temp_e2 = (1 - temp_p0) * temp_e2 + temp_p0 * temp_adjust;
+            est_PSNR = 20 * std::log10(temp_range) - 10 * std::log10(temp_e2);
+            printf("estimated PSNR = %f\n", est_PSNR);
+            printf("Please make sure to select only one predictor.\n");
+            exit(0);
 
 //            printf("compress 001\n");
             encoder.preprocess_encode(quant_inds, 0);
