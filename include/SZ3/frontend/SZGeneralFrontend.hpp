@@ -50,6 +50,10 @@ namespace SZ {
             double prediction = 0;
             ska::unordered_map<T, size_t> pre_freq;
             int ii = 0;
+            T temp_value;
+            T temp_va = 0;
+            T temp_nu = 0;
+            T temp_ele;
 
             for (auto block = block_range->begin(); block != block_range->end(); ++block) {
 
@@ -62,10 +66,16 @@ namespace SZ {
 
                 for (auto element = element_range->begin(); element != element_range->end(); ++element) {
                     ii++;
+                    temp_ele = *element;
+                    temp_value = predictor_withfallback->predict(element);
                     quant_inds[quant_count++] = quantizer.quantize_and_overwrite(
-                            *element, predictor_withfallback->predict(element));
+                            *element, temp_value);
                     if (ii % 100 == 0) {
                         pre_num++;
+                        if (quant_inds[quant_count-1] == 512){
+                            temp_nu++;
+                            temp_va += (fabs((float) temp_ele - temp_value))*(fabs((float) temp_ele - temp_value));
+                        }
                         pre_freq[quant_inds[quant_count-1]]++;
                     }
                 }
@@ -148,7 +158,10 @@ namespace SZ {
 
             printf("Predicted compression ratio: %f\n", 32/prediction);
             printf("Predicted compression bit-rate: %f\n", prediction);
-            exit(0);
+            temp_va = temp_va / temp_nu;
+            // exit(0);
+            temp_p0 = p_0;
+            temp_adjust = temp_va;
 
             return quant_inds;
         }
